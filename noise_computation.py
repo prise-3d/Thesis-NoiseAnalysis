@@ -6,9 +6,8 @@ from modules.utils import config as cfg
 from modules import noise
 
 noise_list       = cfg.noise_labels
-filename_ext     = 'png'
-
-generated_folder = 'generated'
+generated_folder = cfg.generated_folder
+filename_ext     = cfg.filename_ext
 
 def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 
@@ -53,7 +52,7 @@ def main():
             p_noise = a
 
             if not p_noise in noise_list:
-                assert False, "Unknow noise parameter %s " % (noise_list)
+                assert False, "Unknow noise parameter %s, %s " % (p_noise, noise_list)
 
         elif o in ("-i", "--image"):
             p_image_path = a
