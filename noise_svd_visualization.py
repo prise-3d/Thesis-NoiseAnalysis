@@ -18,25 +18,30 @@ pictures_folder       = cfg.pictures_output_folder
 
 def main():
 
+    # default values
     p_step = 1
+    p_color = 0
+    p_norm = 0
+    p_ylim = (0, 1)
+
     max_value_svd = 0
     min_value_svd = sys.maxsize
 
     if len(sys.argv) <= 1:
-        print('python noise_svd_visualization.py --prefix path/with/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --output filename')
+        print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "h:p:m:m:n:i:s:o", ["help=", "prefix=", "metric=", "mode=", "n=", "interval=", "step=", "output="])
+        opts, args = getopt.getopt(sys.argv[1:], "h:p:m:m:n:i:s:c:n:y", ["help=", "prefix=", "metric=", "mode=", "n=", "interval=", "step=", "color=", "norm=", "ylim="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python noise_svd_visualization.py --prefix path/with/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --output filename')
+        print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python noise_svd_visualization.py --prefix path/with/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --output filename')
+            print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
             sys.exit()
         elif o in ("-p", "--prefix"):
-            p_prefix = a
+            p_path = a
         elif o in ("-m", "--mode"):
             p_mode = a
 
@@ -51,19 +56,27 @@ def main():
 
         elif o in ("-n", "--n"):
             p_n = int(a)
+        elif o in ("-n", "--norm"):
+            p_norm = int(a)
+        elif o in ("-c", "--color"):
+            p_color = int(a)
         elif o in ("-i", "--interval"):
             p_interval = list(map(int, a.split(',')))
         elif o in ("-s", "--step"):
             p_step = int(a)
-        elif o in ("-o", "--output"):
-            p_output = a
+        elif o in ("-y", "--ylim"):
+            p_ylim = list(map(float, a.split(',')))
         else:
             assert False, "unhandled option"
 
 
-    noise_name = p_prefix.split('/')[1].replace('_', '')
+    p_prefix = p_path.split('/')[1].replace('_', '')
+    noise_name = p_path.split('/')[2].replace('_', '')
 
-    file_path = p_prefix + "{}." + filename_ext
+    if p_color:
+        file_path = p_path + "/" + p_prefix + "_{}_color." + filename_ext
+    else:
+        file_path = p_path + "/" + p_prefix + "_{}." + filename_ext
 
     begin, end = p_interval
     all_svd_data = []
@@ -78,7 +91,10 @@ def main():
         img = Image.open(image_path)
 
         svd_values = dt.get_svd_data(p_metric, img)
-        svd_values = svd_values[begin:end]
+
+        if p_norm:
+            svd_values = svd_values[begin:end]
+
         all_svd_data.append(svd_values)
 
         # update min max values
@@ -94,7 +110,6 @@ def main():
         print('%.2f%%' % ((i + 1) / p_n * 100))
         sys.stdout.write("\033[F")
 
-    print("Generation of output figure...")
     for id, data in enumerate(all_svd_data):
 
         if id % p_step == 0:
@@ -109,9 +124,11 @@ def main():
             svd_data.append(current_data)
             image_indices.append(id)
 
-    # display all data using matplotlib
+    # display all data using matplotlib (configure plt)
 
-    plt.title(noise_name  + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + p_metric + ' metric, step ' + str(p_step), fontsize=20)
+    plt.rcParams['figure.figsize'] = (25, 18)
+
+    plt.title(p_prefix  + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + p_metric + ' metric, step ' + str(p_step) + ' normalization ' + p_mode, fontsize=20)
     plt.ylabel('Importance of noise [1, 999]', fontsize=14)
     plt.xlabel('Vector features', fontsize=16)
 
@@ -121,16 +138,26 @@ def main():
         plt.plot(data, label=p_label)
 
     plt.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.2, fontsize=14)
-    plt.ylim(0, 0.1)
-    plt.show()
 
-    output_filename = noise_name + "1_to_" + str(p_n) + "_B" + str(begin) + "_E" + str(end) + "_" + p_metric + "_S" + str(p_step) + "_" + p_mode
+    if not p_norm:
+        plt.xlim(begin, end)
+
+    # adapt ylim
+    y_begin, y_end = p_ylim
+    plt.ylim(y_begin, y_end)
+
+    output_filename = p_prefix + "_" + noise_name + "_1_to_" + str(p_n) + "_B" + str(begin) + "_E" + str(end) + "_" + p_metric + "_S" + str(p_step) + "_norm" + str(p_norm )+  "_" + p_mode
+
+    if p_color:
+        output_filename = output_filename + '_color'
+
+    print("Generation of output figure... %s" % output_filename)
     output_path = os.path.join(pictures_folder, output_filename)
 
     if not os.path.exists(pictures_folder):
         os.makedirs(pictures_folder)
 
-    plt.savefig(output_path)
+    plt.savefig(output_path, dpi=(200))
 
 
 

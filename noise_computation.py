@@ -14,7 +14,9 @@ def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
     noisy_image = noise.get_noise_result(p_image, p_n, _noise_choice=p_noise, _identical=p_identical, _p=p_param)
     noisy_image = Image.fromarray(noisy_image)
 
-    output_path = os.path.join(generated_folder, p_noise)
+    image_folder = p_image.filename.split('/')[-1].replace('.' + filename_ext, '')
+
+    output_path = os.path.join(os.path.join(generated_folder, image_folder), p_noise)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
