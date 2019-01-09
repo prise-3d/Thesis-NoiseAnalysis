@@ -11,9 +11,6 @@ filename_ext     = cfg.filename_ext
 
 def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 
-    noisy_image = noise.get_noise_result(p_image, p_n, _noise_choice=p_noise, _identical=p_identical, _p=p_param)
-    noisy_image = Image.fromarray(noisy_image)
-
     image_folder = p_image.filename.split('/')[-1].replace('.' + filename_ext, '')
 
     output_path = os.path.join(os.path.join(generated_folder, image_folder), p_noise)
@@ -26,9 +23,17 @@ def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
     if not filename_ext in output_image_path:
         output_image_path = output_image_path + filename_ext
 
-    noisy_image.save(output_image_path)
+    if not os.path.exists(output_image_path):
 
-    print("Image saved at... '%s'" % output_image_path)
+        noisy_image = noise.get_noise_result(p_image, p_n, _noise_choice=p_noise, _identical=p_identical, _p=p_param)
+        noisy_image = Image.fromarray(noisy_image)
+
+        noisy_image.save(output_image_path)
+
+        print("Image saved at... '%s'" % output_image_path)
+    else:
+        print("Image already exists... '%s'" % output_image_path)
+
 
 
 def main():

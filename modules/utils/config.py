@@ -1,3 +1,5 @@
+import numpy as np
+
 zone_folder                     = "zone"
 output_data_folder              = 'data'
 threshold_map_folder            = 'threshold_map'
