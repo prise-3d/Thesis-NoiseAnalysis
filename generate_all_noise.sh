@@ -5,7 +5,7 @@ for file in "images"/*; do
     read -ra ADDR <<< "$file" # str is read into an array as tokens separated by IFS
     IFS=' '
 
-    image=${ADDR[1]}
+    image=${ADDR[1]%".png"}
 
     for noise in {"cauchy","gaussian","laplace","log_normal","mut_white","white"}; do
 
