@@ -39,21 +39,22 @@ def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 def main():
 
     # by default..
+    p_step = 1
     p_param = None
     p_all = False
 
     if len(sys.argv) < 1:
-        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --all 1 --p 0.1')
+        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "h:n:i:n:i:o:a:p", ["help=", "noise=", "image=", "n=", "identical=", "output=", "all=", "p="])
+        opts, args = getopt.getopt(sys.argv[1:], "h:n:i:n:i:o:a:p", ["help=", "noise=", "image=", "n=", "identical=", "output=", "step=", "all=", "p="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --all 1 --p 0.1')
+        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --all 1 --p 0.1')
+            print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
             sys.exit()
         elif o in ("-n", "--noise"):
             p_noise = a
@@ -68,6 +69,8 @@ def main():
 
         elif o in ("-i", "--identical"):
             p_identical = int(a)
+        elif o in ("-s", "--step"):
+            p_step = int(a)
         elif o in ("-o", "--output"):
             p_output = a
         elif o in ("-a", "--all"):
@@ -84,9 +87,11 @@ def main():
         split_output = p_output.split('.')
 
         for i in range(1, p_n):
-            p_filename = split_output[0] + "_" + str(i) + "." + filename_ext
 
-            generate_noisy_image(img, i, p_noise, p_identical, p_filename, p_param)
+            if i % p_step == 0:
+                p_filename = split_output[0] + "_" + str(i) + "." + filename_ext
+
+                generate_noisy_image(img, i, p_noise, p_identical, p_filename, p_param)
 
     else:
         generate_noisy_image(img, p_n, p_noise, p_identical, p_output, p_param)
