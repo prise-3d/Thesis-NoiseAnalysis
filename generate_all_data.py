@@ -33,6 +33,7 @@ path                    = cfg.generated_folder
 zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
 
+noise_choices           = cfg.noise_labels
 metric_choices          = cfg.metric_choices_labels
 output_data_folder      = cfg.output_data_folder
 
@@ -44,7 +45,7 @@ picture_step            = 10
 # avoid calibration data ?
 calibration_folder      = 'calibration'
 
-def generate_data_svd(data_type, mode):
+def generate_data_svd(data_type, color, mode):
     """
     @brief Method which generates all .csv files from scenes
     @param data_type,  metric choice
@@ -72,102 +73,120 @@ def generate_data_svd(data_type, mode):
         print(folder_scene)
         scene_path = os.path.join(path, folder_scene)
 
-        # getting output filename
-        output_svd_filename = data_type + "_" + mode + generic_output_file_svd
 
-        # construct each zones folder name
-        zones_folder = []
-        svd_output_files = []
+        for noise in noise_choices:
 
-        # get zones list info
-        for index in zones:
-            index_str = str(index)
-            if len(index_str) < 2:
-                index_str = "0" + index_str
+            noise_path = os.path.join(scene_path, noise)
 
-            current_zone = "zone"+index_str
-            zones_folder.append(current_zone)
+            # getting output filename
+            if color:
+                output_svd_filename = data_type + "_color_" + mode + generic_output_file_svd
+            else:
+                output_svd_filename = data_type + "_" + mode + generic_output_file_svd
 
-            zone_path = os.path.join(scene_path, current_zone)
+            # construct each zones folder name
+            zones_folder = []
+            svd_output_files = []
 
-            if not os.path.exists(zone_path):
-                os.makedirs(zone_path)
+            # get zones list info
+            for index in zones:
+                index_str = str(index)
+                if len(index_str) < 2:
+                    index_str = "0" + index_str
 
-            svd_file_path = os.path.join(zone_path, output_svd_filename)
+                current_zone = "zone"+index_str
+                zones_folder.append(current_zone)
 
-            # add writer into list
-            svd_output_files.append(open(svd_file_path, 'w'))
+                zone_path = os.path.join(noise_path, current_zone)
 
-        counter_index = 1
+                if not os.path.exists(zone_path):
+                    os.makedirs(zone_path)
 
-        while(counter_index <= end_counter_index):
+                svd_file_path = os.path.join(zone_path, output_svd_filename)
 
-            if counter_index % picture_step == 0:
-                counter_index_str = str(counter_index)
+                # add writer into list
+                svd_output_files.append(open(svd_file_path, 'w'))
 
-                img_path = os.path.join(scene_path, forlder_scene + "_" + counter_index_str + ".png")
+            counter_index = 1
 
-                current_img = Image.open(img_path)
-                img_blocks = processing.divide_in_blocks(current_img, (200, 200))
+            while(counter_index < end_counter_index):
 
-                for id_block, block in enumerate(img_blocks):
+                if counter_index % picture_step == 0:
+                    counter_index_str = str(counter_index)
 
-                    ###########################
-                    # Metric computation part #
-                    ###########################
+                    if color:
+                        img_path = os.path.join(noise_path, folder_scene + "_" + noise + "_color_" + counter_index_str + ".png")
+                    else:
+                        img_path = os.path.join(noise_path, folder_scene + "_" + noise + "_" + counter_index_str + ".png")
 
-                    data = get_svd_data(data_type, block)
+                    current_img = Image.open(img_path)
+                    img_blocks = processing.divide_in_blocks(current_img, (200, 200))
 
-                    ##################
-                    # Data mode part #
-                    ##################
+                    for id_block, block in enumerate(img_blocks):
 
-                    # modify data depending mode
-                    if mode == 'svdne':
+                        ###########################
+                        # Metric computation part #
+                        ###########################
 
-                        # getting max and min information from min_max_filename
-                        with open(data_min_max_filename, 'r') as f:
-                            min_val = float(f.readline())
-                            max_val = float(f.readline())
+                        data = get_svd_data(data_type, block)
 
-                        data = processing.normalize_arr_with_range(data, min_val, max_val)
+                        ##################
+                        # Data mode part #
+                        ##################
 
-                    if mode == 'svdn':
-                        data = processing.normalize_arr(data)
+                        # modify data depending mode
+                        if mode == 'svdne':
 
-                    # save min and max found from dataset in order to normalize data using whole data known
-                    if mode == 'svd':
+                            # getting max and min information from min_max_filename
+                            with open(data_min_max_filename, 'r') as f:
+                                min_val = float(f.readline())
+                                max_val = float(f.readline())
 
-                        current_min = data.min()
-                        current_max = data.max()
+                            data = processing.normalize_arr_with_range(data, min_val, max_val)
 
-                        if current_min < min_val_found:
-                            min_val_found = current_min
+                        if mode == 'svdn':
+                            data = processing.normalize_arr(data)
 
-                        if current_max > max_val_found:
-                            max_val_found = current_max
+                        # save min and max found from dataset in order to normalize data using whole data known
+                        if mode == 'svd':
 
-                    # now write data into current writer
-                    current_file = svd_output_files[id_block]
+                            current_min = data.min()
+                            current_max = data.max()
 
-                    # add of index
-                    current_file.write(counter_index_str + ';')
+                            if current_min < min_val_found:
+                                min_val_found = current_min
 
-                    for val in data:
-                        current_file.write(str(val) + ";")
+                            if current_max > max_val_found:
+                                max_val_found = current_max
 
-                    current_file.write('\n')
+                        # now write data into current writer
+                        current_file = svd_output_files[id_block]
 
-            start_index_image_int = int(start_index_image)
-            print(data_type + "_" + mode + "_" + folder_scene + " - " + "{0:.2f}".format((counter_index) / (end_counter_index)* 100.) + "%")
-            sys.stdout.write("\033[F")
+                        # add of index
+                        current_file.write(counter_index_str + ';')
 
-            counter_index += 1
+                        for val in data:
+                            current_file.write(str(val) + ";")
 
-        for f in svd_output_files:
-            f.close()
+                        current_file.write('\n')
 
-        print('\n')
+                if color:
+                    print(data_type + "_" + noise + "_color_" + mode + "_" + folder_scene + " - " + "{0:.2f}".format((counter_index) / (end_counter_index)* 100.) + "%")
+                else:
+                    print(data_type + "_" + noise + "_"+ mode + "_" + folder_scene + " - " + "{0:.2f}".format((counter_index) / (end_counter_index)* 100.) + "%")
+
+                sys.stdout.write("\033[F")
+
+                counter_index += 1
+
+            for f in svd_output_files:
+                f.close()
+
+            if color:
+                print(data_type + "_" + noise + "_color_" + mode + "_" + folder_scene + " - " + "Done...")
+            else:
+                print(data_type + "_" + noise + "_"+ mode + "_" + folder_scene + " - " + "Done...")
+
 
     # save current information about min file found
     if mode == 'svd':
@@ -182,25 +201,28 @@ def main():
 
     # default value of p_step
     p_step = 10
+    p_color = 0
 
     if len(sys.argv) <= 1:
         print('Run with default parameters...')
-        print('python generate_all_data.py --metric all')
-        print('python generate_all_data.py --metric lab')
-        print('python generate_all_data.py --metric lab --step 10')
+        print('python generate_all_data.py --metric all --color 0')
+        print('python generate_all_data.py --metric lab --color 0')
+        print('python generate_all_data.py --metric lab --color 1 --step 10')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hms", ["help=", "metric=", "step="])
+        opts, args = getopt.getopt(sys.argv[1:], "hm:s:c", ["help=", "metric=", "step=", "color="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python generate_all_data.py --metric all --step 10')
+        print('python generate_all_data.py --metric all --color 1 --step 10')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python generate_all_data.py --metric all --step 10')
+            print('python generate_all_data.py --metric all --color 1 --step 10')
             sys.exit()
         elif o in ("-s", "--step"):
             p_step = int(a)
+        elif o in ("-c", "--color"):
+            p_color = int(a)
         elif o in ("-m", "--metric"):
             p_metric = a
 
@@ -218,13 +240,13 @@ def main():
     # generate all or specific metric data
     if p_metric == 'all':
         for m in metric_choices:
-            generate_data_svd(m, 'svd')
-            generate_data_svd(m, 'svdn')
-            generate_data_svd(m, 'svdne')
+            generate_data_svd(m, p_color, 'svd')
+            generate_data_svd(m, p_color, 'svdn')
+            generate_data_svd(m, p_color, 'svdne')
     else:
-        generate_data_svd(p_metric, 'svd')
-        generate_data_svd(p_metric, 'svdn')
-        generate_data_svd(p_metric, 'svdne')
+        generate_data_svd(p_metric, p_color, 'svd')
+        generate_data_svd(p_metric, p_color, 'svdn')
+        generate_data_svd(p_metric, p_color, 'svdne')
 
 if __name__== "__main__":
     main()

@@ -41,7 +41,7 @@ generic_output_file_svd = '_random.csv'
 min_value_interval = sys.maxsize
 max_value_interval = 0
 
-def construct_new_line(path_seuil, interval, line, norm, sep, index):
+def construct_new_line(path_seuil, interval, line, norm):
     begin, end = interval
 
     line_data = line.split(';')
@@ -63,15 +63,13 @@ def construct_new_line(path_seuil, interval, line, norm, sep, index):
         line = '0'
 
     for idx, val in enumerate(metrics):
-        if index:
-            line += " " + str(idx + 1)
-        line += sep
+        line += ';'
         line += str(val)
     line += '\n'
 
     return line
 
-def get_min_max_value_interval(_filename, _interval, _choice, _metric):
+def get_min_max_value_interval(_filename, _interval, _choice, _color, _metric):
 
     global min_value_interval, max_value_interval
 
@@ -103,7 +101,12 @@ def get_min_max_value_interval(_filename, _interval, _choice, _metric):
 
             for id_zone, zone_folder in enumerate(zones_folder):
                 zone_path = os.path.join(scene_path, zone_folder)
-                data_filename = _metric + "_" + _choice + generic_output_file_svd
+
+                if _color:
+                    data_filename = _metric + "_color_" + _choice + generic_output_file_svd
+                else:
+                    data_filename = _metric + "_" + _choice + generic_output_file_svd
+
                 data_file_path = os.path.join(zone_path, data_filename)
 
                 # getting number of line and read randomly lines
@@ -132,7 +135,7 @@ def get_min_max_value_interval(_filename, _interval, _choice, _metric):
                     counter += 1
 
 
-def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes_list, _nb_zones = 4, _percent = 1, _norm = False, _sep=':', _index=True):
+def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes_list, _nb_zones = 4, _percent = 1, _color=False, _norm = False):
 
     output_train_filename = _filename + ".train"
     output_test_filename = _filename + ".test"
@@ -152,7 +155,6 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
     # remove min max file from scenes folder
     scenes = [s for s in scenes if min_max_filename not in s]
 
-
     for id_scene, folder_scene in enumerate(scenes):
 
         # only take care of maxwell scenes
@@ -171,11 +173,16 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
             # shuffle list of zones (=> randomly choose zones)
             random.shuffle(zones_folder)
 
-            path_seuil = os.path.join(zone_path, seuil_expe_filename)
+            path_seuil = os.path.join(scene_path, seuil_expe_filename)
 
             for id_zone, zone_folder in enumerate(zones_folder):
                 zone_path = os.path.join(scene_path, zone_folder)
-                data_filename = _metric + "_" + _choice + generic_output_file_svd
+
+                if _color:
+                    data_filename = _metric + "_color_" + _choice + generic_output_file_svd
+                else:
+                    data_filename = _metric + "_" + _choice + generic_output_file_svd
+
                 data_file_path = os.path.join(zone_path, data_filename)
 
                 # getting number of line and read randomly lines
@@ -191,7 +198,7 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
                 counter = 0
                 # check if user select current scene and zone to be part of training data set
                 for index in lines_indexes:
-                    line = construct_new_line(path_seuil, _interval, lines[index], _norm, _sep, _index)
+                    line = construct_new_line(path_seuil, _interval, lines[index], _norm)
 
                     percent = counter / num_lines
 
@@ -214,17 +221,17 @@ def main():
 
     if len(sys.argv) <= 1:
         print('Run with default parameters...')
-        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --sep : --rowindex 1 --custom min_max_filename')
+        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:i:k:s:n:p:r:c", ["help=", "output=", "interval=", "kind=", "metric=","scenes=", "nb_zones=", "percent=", "sep=", "rowindex=", "custom="])
+        opts, args = getopt.getopt(sys.argv[1:], "ho:i:k:s:n:p:r:c:c", ["help=", "output=", "interval=", "kind=", "metric=","scenes=", "nb_zones=", "percent=", "color=", "custom="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --sep : --rowindex 1 --custom min_max_filename')
+        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --sep : --rowindex 1 --custom min_max_filename')
+            print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
             sys.exit()
         elif o in ("-o", "--output"):
             p_filename = a
@@ -240,13 +247,8 @@ def main():
             p_nb_zones = int(a)
         elif o in ("-p", "--percent"):
             p_percent = float(a)
-        elif o in ("-s", "--sep"):
-            p_sep = a
-        elif o in ("-r", "--rowindex"):
-            if int(a) == 1:
-                p_rowindex = True
-            else:
-                p_rowindex = False
+        elif o in ("-c", "--color"):
+            p_color = int(a)
         elif o in ("-c", "--custom"):
             p_custom = a
         else:
@@ -261,7 +263,7 @@ def main():
 
     # find min max value if necessary to renormalize data
     if p_custom:
-        get_min_max_value_interval(p_filename, p_interval, p_kind, p_metric)
+        get_min_max_value_interval(p_filename, p_interval, p_kind, p_color, p_metric)
 
         # write new file to save
         if not os.path.exists(custom_min_max_folder):
@@ -275,7 +277,7 @@ def main():
             f.write(str(max_value_interval) + '\n')
 
     # create database using img folder (generate first time only)
-    generate_data_model(p_filename, p_interval, p_kind, p_metric, scenes_selected, p_nb_zones, p_percent, p_custom, p_sep, p_rowindex)
+    generate_data_model(p_filename, p_interval, p_kind, p_metric, scenes_selected, p_nb_zones, p_percent, p_color, p_custom)
 
 if __name__== "__main__":
     main()
