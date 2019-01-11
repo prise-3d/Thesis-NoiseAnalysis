@@ -2,6 +2,7 @@ from ipfml import processing, metrics
 from PIL import Image
 from skimage import color
 
+import random
 import numpy as np
 
 def get_svd_data(data_type, block):
@@ -11,17 +12,21 @@ def get_svd_data(data_type, block):
 
     if data_type == 'lab':
 
-        block_file_path = '/tmp/lab_img.png'
+        nb = random.randint(0, 10)
+
+        block_file_path = '/tmp/' + str(nb) + '_lab_img.png'
         block.save(block_file_path)
         data = processing.get_LAB_L_SVD_s(Image.open(block_file_path))
 
     if data_type == 'mscn_revisited':
 
+        nb = random.randint(0, 10)
+
         img_mscn_revisited = processing.rgb_to_mscn(block)
 
         # save tmp as img
         img_output = Image.fromarray(img_mscn_revisited.astype('uint8'), 'L')
-        mscn_revisited_file_path = '/tmp/mscn_revisited_img.png'
+        mscn_revisited_file_path = '/tmp/' + str(nb) + '_mscn_revisited_img.png'
         img_output.save(mscn_revisited_file_path)
         img_block = Image.open(mscn_revisited_file_path)
 

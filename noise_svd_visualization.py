@@ -16,6 +16,8 @@ metric_choices        = cfg.metric_choices_labels
 normalization_choices = cfg.normalization_choices
 pictures_folder       = cfg.pictures_output_folder
 
+step_picture          = 10
+
 def main():
 
     # default values
@@ -28,17 +30,17 @@ def main():
     min_value_svd = sys.maxsize
 
     if len(sys.argv) <= 1:
-        print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
+        print('python noise_svd_visualization.py --prefix generated/prefix/noise --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
         sys.exit(2)
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h:p:m:m:n:i:s:c:n:y", ["help=", "prefix=", "metric=", "mode=", "n=", "interval=", "step=", "color=", "norm=", "ylim="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
+        print('python noise_svd_visualization.py --prefix generated/prefix/noise --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python noise_svd_visualization.py --prefix generated/noise/prefix --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
+            print('python noise_svd_visualization.py --prefix generated/prefix/noise --metric lab --mode svdn --n 300 --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
             sys.exit()
         elif o in ("-p", "--prefix"):
             p_path = a
@@ -71,12 +73,12 @@ def main():
 
 
     p_prefix = p_path.split('/')[1].replace('_', '')
-    noise_name = p_path.split('/')[2].replace('_', '')
+    noise_name = p_path.split('/')[2]
 
     if p_color:
-        file_path = p_path + "/" + p_prefix + "_{}_color." + filename_ext
+        file_path = p_path + "/" + p_prefix + "_" + noise_name + "_color_{}." + filename_ext
     else:
-        file_path = p_path + "/" + p_prefix + "_{}." + filename_ext
+        file_path = p_path + "/" + p_prefix + "_" + noise_name + "_{}." + filename_ext
 
     begin, end = p_interval
     all_svd_data = []
@@ -87,32 +89,34 @@ def main():
     # get all data from images
     for i in range(1, p_n):
 
-        image_path = file_path.format(str(i))
-        img = Image.open(image_path)
+        if i % step_picture == 0:
 
-        svd_values = dt.get_svd_data(p_metric, img)
+            image_path = file_path.format(str(i))
+            img = Image.open(image_path)
 
-        if p_norm:
-            svd_values = svd_values[begin:end]
+            svd_values = dt.get_svd_data(p_metric, img)
 
-        all_svd_data.append(svd_values)
+            if p_norm:
+                svd_values = svd_values[begin:end]
 
-        # update min max values
-        min_value = svd_values.min()
-        max_value = svd_values.max()
+            all_svd_data.append(svd_values)
 
-        if min_value < min_value_svd:
-            min_value_svd = min_value
+            # update min max values
+            min_value = svd_values.min()
+            max_value = svd_values.max()
 
-        if max_value > min_value_svd:
-            max_value_svd = max_value
+            if min_value < min_value_svd:
+                min_value_svd = min_value
+
+            if max_value > min_value_svd:
+                max_value_svd = max_value
 
         print('%.2f%%' % ((i + 1) / p_n * 100))
         sys.stdout.write("\033[F")
 
     for id, data in enumerate(all_svd_data):
 
-        if id % p_step == 0:
+        if (id * step_picture) % p_step == 0:
 
             current_data = data
             if p_mode == 'svdn':
@@ -122,7 +126,7 @@ def main():
                 current_data = processing.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
 
             svd_data.append(current_data)
-            image_indices.append(id)
+            image_indices.append(str(id * step_picture))
 
     # display all data using matplotlib (configure plt)
 

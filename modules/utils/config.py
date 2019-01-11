@@ -28,7 +28,7 @@ maxwell_scenes_indices          = ['A', 'D', 'G', 'H']
 normalization_choices           = ['svd', 'svdn', 'svdne']
 zones_indices                   = np.arange(16)
 
-metric_choices_labels           = ['lab', 'mscn', 'mscn_revisited', 'low_bits_2', 'low_bits_3', 'low_bits_4', 'low_bits_5', 'low_bits_6','low_bits_4_shifted_2']
+metric_choices_labels           = ['lab', 'low_bits_2', 'low_bits_3', 'low_bits_4', 'low_bits_5', 'low_bits_6','low_bits_4_shifted_2']
 
 # noise information
 noise_labels                    = ['cauchy', 'gaussian', 'laplace', 'log_normal', 'mut_white', 'salt_pepper', 'white']

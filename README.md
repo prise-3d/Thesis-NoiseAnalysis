@@ -13,6 +13,36 @@ Noise list :
 - salt_pepper
 - white
 
+
+## Generate all data
+
+### Step 1.
+
+First of all you need to generate all noise of each images in **/generated** folder.
+
+```
+bash generate_all_noise.sh
+```
+
+### Step 2.
+
+Once you had generate all noisy images from synthesis scenes, you need to extract features (SVD singular values) using different metrics.
+
+```
+python generate_all_data.py --metric all --step 40 --color 0
+python generate_all_data.py --metric all --step 40 --color 1
+```
+
+### Step 3.
+
+You can display curves of each noise for each scene :
+
+```
+bash generate_noise_all_curves.sh
+```
+
+This will give you some information about SVD singular values obtained from noise applied synthesis images. All these curves are available into **curves_pictures** folder after running script.
+
 ## Scripts
 
 ### noise_computation.py
@@ -28,6 +58,7 @@ Parameters :
 - **image** : source path of the image we want to add noise
 - **n** : level of noise to use
 - **identical** : same noise or not for each chanel in case of RGB image
+- **step** : interval of identifier between each image kept
 - **output** : output image name wanted
 - **all** : generate all level noise from 1 to **n**
 - **p** : optional parameter only used for salt and pepper noise
@@ -44,11 +75,12 @@ python noise_svd_visualization.py  --prefix generated/${image}/${noise} --metric
 Parameters :
 - **prefix** : specify the folder of image for specific noise 
 - **metric** : metric choice to compute in order to extract SVD data
+- **n** : limit identifier to use for image scene 
 - **mode** : level of normalization ['svd', 'svdn', 'svdne']
 - **interval** : features to display from singular values vector
 - **step** : interval of noise to keep for display 
 - **norm** : normalization between only values kept from interval
+- **color** : specify if we use 3 chanels with different noise or with same noise
 - **ylim** : ylim to use in order to display curves
-
 
 

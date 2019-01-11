@@ -88,7 +88,6 @@ def main():
 
         for i in range(1, p_n):
 
-            print(i)
             if i % p_step == 0:
                 p_filename = split_output[0] + "_" + str(i) + "." + filename_ext
 
