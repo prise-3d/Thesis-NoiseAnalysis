@@ -1,9 +1,16 @@
 from ipfml import processing, metrics
+from modules.utils.config import *
 from PIL import Image
 from skimage import color
 
 import random
 import numpy as np
+
+_scenes_names_prefix   = '_scenes_names'
+_scenes_indices_prefix = '_scenes_indices'
+
+# store all variables from current module context
+context_vars = vars()
 
 def get_svd_data(data_type, block):
     """
@@ -73,5 +80,25 @@ def get_svd_data(data_type, block):
         data = metrics.get_SVD_s(processing.rgb_to_LAB_L_bits(block, (3, 6)))
 
     return data
+
+def get_renderer_scenes_indices(renderer_name):
+
+    if renderer_name not in renderer_choices:
+        raise ValueError("Unknown renderer name")
+
+    if renderer_name == 'all':
+        return scenes_indices
+    else:
+        return context_vars[renderer_name + _scenes_indices_prefix]
+
+def get_renderer_scenes_names(renderer_name):
+
+    if renderer_name not in renderer_choices:
+        raise ValueError("Unknown renderer name")
+
+    if renderer_name == 'all':
+        return scenes_names
+    else:
+        return context_vars[renderer_name + _scenes_names_prefix]
 
 

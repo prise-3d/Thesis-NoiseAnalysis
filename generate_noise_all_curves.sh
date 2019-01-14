@@ -7,7 +7,7 @@ for file in "images"/*; do
 
     image=${ADDR[1]%".png"}
 
-    if [[ "$image" != "calibration" ]]; then
+    if [ "$image" != "calibration" ] || [ "$image" != *"min_max_values"* ]; then
 
         for metric in {"lab","mscn_revisited","low_bits_2","low_bits_3","low_bits_4", "low_bits_5","low_bits_6","low_bits_4_shifted_2"}; do
             for noise in {"cauchy","gaussian","laplace","log_normal","mut_white","white","salt_pepper"}; do

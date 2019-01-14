@@ -26,8 +26,8 @@ zone_folder             = cfg.zone_folder
 min_max_filename        = cfg.min_max_filename_extension
 
 # define all scenes values
-scenes_list             = cfg.maxwell_scenes_folders
-scenes_indexes          = cfg.scenes_indices
+scenes_list             = cfg.scenes_names
+scenes_indices          = cfg.scenes_indices
 choices                 = cfg.normalization_choices
 path                    = cfg.generated_folder
 zones                   = cfg.zones_indices
@@ -72,7 +72,6 @@ def generate_data_svd(data_type, color, mode):
 
         print(folder_scene)
         scene_path = os.path.join(path, folder_scene)
-
 
         for noise in noise_choices:
 

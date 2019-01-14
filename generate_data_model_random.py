@@ -17,14 +17,16 @@ from PIL import Image
 from ipfml import processing, metrics
 
 from modules.utils import config as cfg
+from modules.utils import data as dt
 
 # getting configuration information
 zone_folder             = cfg.zone_folder
 min_max_filename        = cfg.min_max_filename_extension
 
 # define all scenes values
-scenes_list             = cfg.scenes_folders
-scenes_indexes          = cfg.scenes_indices
+all_scenes_list         = cfg.scenes_names
+all_scenes_indices      = cfg.scenes_indices
+
 choices                 = cfg.normalization_choices
 path                    = cfg.dataset_path
 zones                   = cfg.zones_indices
@@ -69,7 +71,7 @@ def construct_new_line(path_seuil, interval, line, norm):
 
     return line
 
-def get_min_max_value_interval(_filename, _interval, _choice, _color, _metric):
+def get_min_max_value_interval(_scenes_list, _filename, _interval, _choice, _color, _metric):
 
     global min_value_interval, max_value_interval
 
@@ -84,7 +86,7 @@ def get_min_max_value_interval(_filename, _interval, _choice, _color, _metric):
     for id_scene, folder_scene in enumerate(scenes):
 
         # only take care of synthesis scenes
-        if folder_scene in scenes_list:
+        if folder_scene in _scenes_list:
 
             scene_path = os.path.join(path, folder_scene)
 
@@ -135,7 +137,7 @@ def get_min_max_value_interval(_filename, _interval, _choice, _color, _metric):
                     counter += 1
 
 
-def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes_list, _nb_zones = 4, _percent = 1, _color=False, _norm = False):
+def generate_data_model(_scenes_list, _filename, _interval, _choice, _metric, _scenes = scenes_list, _nb_zones = 4, _percent = 1,  _random=0, _step=40, _color=False, _norm = False):
 
     output_train_filename = _filename + ".train"
     output_test_filename = _filename + ".test"
@@ -147,18 +149,18 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
     if not os.path.exists(output_data_folder):
         os.makedirs(output_data_folder)
 
-    train_file = open(output_train_filename, 'w')
-    test_file = open(output_test_filename, 'w')
-
     scenes = os.listdir(path)
 
     # remove min max file from scenes folder
     scenes = [s for s in scenes if min_max_filename not in s]
 
+    train_file_data = []
+    test_file_data  = []
+
     for id_scene, folder_scene in enumerate(scenes):
 
         # only take care of maxwell scenes
-        if folder_scene in scenes_list:
+        if folder_scene in _scenes_list:
 
             scene_path = os.path.join(path, folder_scene)
 
@@ -171,7 +173,8 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
                 zones_folder.append("zone"+index_str)
 
             # shuffle list of zones (=> randomly choose zones)
-            random.shuffle(zones_folder)
+            if _random:
+                random.shuffle(zones_folder)
 
             path_seuil = os.path.join(scene_path, seuil_expe_filename)
 
@@ -191,25 +194,37 @@ def generate_data_model(_filename, _interval, _choice, _metric, _scenes = scenes
 
                 num_lines = len(lines)
 
-                lines_indexes = np.arange(num_lines)
-                random.shuffle(lines_indexes)
-
+                if _random:
+                    random.shuffle(lines_indexes)
 
                 counter = 0
                 # check if user select current scene and zone to be part of training data set
-                for index in lines_indexes:
-                    line = construct_new_line(path_seuil, _interval, lines[index], _norm)
+                for data in lines:
 
                     percent = counter / num_lines
+                    image_index = int(data.split(';')[0])
 
-                    if id_zone < _nb_zones and folder_scene in _scenes and percent <= _percent:
-                        train_file.write(line)
-                    else:
-                        test_file.write(line)
+                    if image_index % _step == 0:
+                        line = construct_new_line(path_seuil, _interval, data, _choice, _norm, _sep, _index)
+
+                        if id_zone < _nb_zones and folder_scene in _scenes and percent <= _percent:
+                            train_file_data.append(line)
+                        else:
+                            test_file_data.append(line)
 
                     counter += 1
 
                 f.close()
+
+
+    train_file = open(output_train_filename, 'w')
+    test_file = open(output_test_filename, 'w')
+
+    for line in train_file_data:
+        train_file.write(line)
+
+    for line in test_file_data:
+        test_file_data.write(line)
 
     train_file.close()
     test_file.close()
@@ -221,17 +236,17 @@ def main():
 
     if len(sys.argv) <= 1:
         print('Run with default parameters...')
-        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
+        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --random 0 --step 40 --color 0 --custom min_max_filename')
         sys.exit(2)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:i:k:s:n:p:r:c:c", ["help=", "output=", "interval=", "kind=", "metric=","scenes=", "nb_zones=", "percent=", "color=", "custom="])
+        opts, args = getopt.getopt(sys.argv[1:], "ho:i:k:s:n:p:r:s:c:c", ["help=", "output=", "interval=", "kind=", "metric=","scenes=", "nb_zones=", "percent=", "random=", "step=", "color=", "custom="])
     except getopt.GetoptError:
         # print help information and exit:
-        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
+        print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --random 0 --step 40 --color 0 --custom min_max_filename')
         sys.exit(2)
     for o, a in opts:
         if o == "-h":
-            print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --color 0 --custom min_max_filename')
+            print('python generate_data_model_random.py --output xxxx --interval 0,20  --kind svdne --metric lab --scenes "A, B, D" --nb_zones 5 --percent 0.7 --random 0 --step 40 --color 0 --custom min_max_filename')
             sys.exit()
         elif o in ("-o", "--output"):
             p_filename = a
@@ -247,6 +262,10 @@ def main():
             p_nb_zones = int(a)
         elif o in ("-p", "--percent"):
             p_percent = float(a)
+        elif o in ("-r", "--random"):
+            p_random = int(a)
+        elif o in ("-p", "--percent"):
+            p_step = int(a)
         elif o in ("-c", "--color"):
             p_color = int(a)
         elif o in ("-c", "--custom"):
@@ -254,16 +273,20 @@ def main():
         else:
             assert False, "unhandled option"
 
+    # list all possibles choices of renderer
+    scenes_list = dt.get_renderer_scenes_names(p_renderer)
+    scenes_indices = dt.get_renderer_scenes_indices(p_renderer)
+
     # getting scenes from indexes user selection
     scenes_selected = []
 
     for scene_id in p_scenes:
-        index = scenes_indexes.index(scene_id.strip())
+        index = scenes_indices.index(scene_id.strip())
         scenes_selected.append(scenes_list[index])
 
     # find min max value if necessary to renormalize data
     if p_custom:
-        get_min_max_value_interval(p_filename, p_interval, p_kind, p_color, p_metric)
+        get_min_max_value_interval(scenes_list, p_filename, p_interval, p_kind, p_color, p_metric)
 
         # write new file to save
         if not os.path.exists(custom_min_max_folder):
@@ -277,7 +300,7 @@ def main():
             f.write(str(max_value_interval) + '\n')
 
     # create database using img folder (generate first time only)
-    generate_data_model(p_filename, p_interval, p_kind, p_metric, scenes_selected, p_nb_zones, p_percent, p_color, p_custom)
+    generate_data_model(scenes_list, p_filename, p_interval, p_kind, p_metric, scenes_selected, p_nb_zones, p_percent, p_random, p_step, p_color, p_custom)
 
 if __name__== "__main__":
     main()
