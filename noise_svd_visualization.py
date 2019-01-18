@@ -1,7 +1,7 @@
 import sys, os, getopt
 from PIL import Image
 
-from ipfml import processing
+from ipfml import processing, utils
 
 from modules.utils import config as cfg
 from modules.utils import data_type as dt
@@ -120,10 +120,10 @@ def main():
 
             current_data = data
             if p_mode == 'svdn':
-                current_data = processing.normalize_arr(current_data)
+                current_data = utils.normalize_arr(current_data)
 
             if p_mode == 'svdne':
-                current_data = processing.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
+                current_data = utils.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
 
             svd_data.append(current_data)
             image_indices.append(str(id * step_picture))

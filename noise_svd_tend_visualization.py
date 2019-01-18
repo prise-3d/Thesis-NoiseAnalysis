@@ -1,7 +1,7 @@
 import sys, os, getopt
 from PIL import Image
 
-from ipfml import processing
+from ipfml import processing, utils
 
 from modules.utils import config as cfg
 from modules.utils import data_type as dt
@@ -159,10 +159,10 @@ def main():
 
             current_data = data
             if p_mode == 'svdn':
-                current_data = processing.normalize_arr(current_data)
+                current_data = utils.normalize_arr(current_data)
 
             if p_mode == 'svdne':
-                current_data = processing.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
+                current_data = utils.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
 
             svd_data.append(current_data)
             image_indices.append(current_id)
@@ -182,7 +182,7 @@ def main():
     ax1 = plt.subplot2grid(gridsize, (0, 0), colspan=2, rowspan=2)
     ax2 = plt.subplot2grid(gridsize, (2, 0), colspan=2)
 
-    ax1.set_title(p_prefix  + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + p_metric + ' metric, step ' + str(p_step) + ' normalization ' + p_mode)
+    ax1.set_title(p_prefix  + ', ' + noise_name + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + p_metric + ' metric, step ' + str(p_step) + ' normalization ' + p_mode)
     ax1.set_label('Importance of noise [1, 999]')
     ax1.set_xlabel('Vector features')
 
@@ -191,7 +191,7 @@ def main():
         p_label = p_prefix + str(image_indices[id]) + " | MAE : " + str(error_data[id])
         ax1.plot(data, label=p_label)
 
-    ax1.legend(bbox_to_anchor=(0, 1), loc=2, borderaxespad=0.2, fontsize=12)
+    ax1.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.2, fontsize=12)
 
     if not p_norm:
         ax1.set_xlim(begin, end)
