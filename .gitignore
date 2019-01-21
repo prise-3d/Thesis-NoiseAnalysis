@@ -62,3 +62,5 @@ target/
 # others
 generated/*
 curves_pictures/*
+!generated/**/*.csv
+!generated/**/*.txt

@@ -1,0 +1,30 @@
+Calibration scene information
+
+  1 |  2 |  3 |  4
+ ------------------
+  5 |  6 |  7 |  8
+ ------------------
+  9 | 10 | 11 | 12
+ ------------------
+ 13 | 14 | 15 | 16
+ ------------------
+
+Bruits "monochromes"
+1. blanc
+2. gaussien
+3. poivreselA
+4. poivreselB
+5. cauchylorentz
+6. laplacien
+7. lognormal
+8. multiplicatif
+
+Bruits "colorés"
+9. blanc
+10. gaussien
+11. poivreselA
+12. poivreselB
+13. cauchylorentz
+14. laplacien
+15. lognormal
+16. multiplicatif
