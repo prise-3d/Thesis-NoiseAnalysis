@@ -1,0 +1,14 @@
+white;19.5;0
+gaussian;1.5;0
+salt_pepper;0.0;0
+cauchy;21.0;0
+laplace;0.0;0
+log_normal;0.0;0
+mut_white;15.0;0
+white;39.0;1
+gaussian;16.5;1
+salt_pepper;3.0;1
+cauchy;78.0;1
+laplace;6.0;1
+log_normal;0.0;1
+mut_white;33.0;1
