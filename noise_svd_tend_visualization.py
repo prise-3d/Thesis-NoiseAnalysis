@@ -135,7 +135,7 @@ def main():
             if min_value < min_value_svd:
                 min_value_svd = min_value
 
-            if max_value > min_value_svd:
+            if max_value > max_value_svd:
                 max_value_svd = max_value
 
         print('%.2f%%' % ((p_n - i + 1) / p_n * 100))

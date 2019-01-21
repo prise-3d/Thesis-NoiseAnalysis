@@ -108,11 +108,11 @@ def main():
             if min_value < min_value_svd:
                 min_value_svd = min_value
 
-            if max_value > min_value_svd:
+            if max_value > max_value_svd:
                 max_value_svd = max_value
 
-        print('%.2f%%' % ((i + 1) / p_n * 100))
-        sys.stdout.write("\033[F")
+            print('%.2f%%' % ((i + 1) / p_n * 100))
+            sys.stdout.write("\033[F")
 
     for id, data in enumerate(all_svd_data):
 

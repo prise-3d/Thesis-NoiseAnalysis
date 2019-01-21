@@ -83,4 +83,17 @@ Parameters :
 - **color** : specify if we use 3 chanels with different noise or with same noise
 - **ylim** : ylim to use in order to display curves
 
+### noise_svd_tend_visualization.py
+
+Display information about tend of svd values for specific scene
+
+### noise_svd_threshold.py
+
+Display threshold information about scene for each noise perceived. It's necessary to have in scene folder one of this file :
+- threshold_data_mean.csv
+- threshold_data_median.csv
+
+These files contains threshold information about a noise such that each row are written like that :
+- <noise>;<threshold>;<color(0, 1)>
+
 
