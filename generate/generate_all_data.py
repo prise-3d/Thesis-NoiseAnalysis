@@ -1,24 +1,22 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Sep 14 21:02:42 2018
-
-@author: jbuisine
-"""
-
-from __future__ import print_function
-import sys, os, getopt
+# main imports
+import sys, os, argparse
 import numpy as np
 import random
 import time
 import json
 
-from modules.utils.data_type import get_svd_data
+# image processing imports
 from PIL import Image
-from ipfml import processing, metrics, utils
 from skimage import color
 
-from modules.utils import config as cfg
+from ipfml.processing.segmentation import divide_in_blocks
+from ipfml import utils
+
+# modules and config imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
+import custom_config as cfg
+from data_attributes import get_image_features
 
 # getting configuration information
 zone_folder             = cfg.zone_folder
@@ -33,7 +31,7 @@ zones                   = cfg.zones_indices
 seuil_expe_filename     = cfg.seuil_expe_filename
 
 noise_choices           = cfg.noise_labels
-metric_choices          = cfg.metric_choices_labels
+feature_choices         = cfg.features_choices_labels
 output_data_folder      = cfg.output_data_folder
 
 end_counter_index       = cfg.default_number_of_images
@@ -47,7 +45,7 @@ calibration_folder      = 'calibration'
 def generate_data_svd(data_type, color, mode):
     """
     @brief Method which generates all .csv files from scenes
-    @param data_type,  metric choice
+    @param data_type,  feature choice
     @param mode, normalization choice
     @return nothing
     """
@@ -118,15 +116,15 @@ def generate_data_svd(data_type, color, mode):
                         img_path = os.path.join(noise_path, folder_scene + "_" + noise + "_" + counter_index_str + ".png")
 
                     current_img = Image.open(img_path)
-                    img_blocks = processing.divide_in_blocks(current_img, (200, 200))
+                    img_blocks = divide_in_blocks(current_img, (200, 200))
 
                     for id_block, block in enumerate(img_blocks):
 
                         ###########################
-                        # Metric computation part #
+                        # feature computation part #
                         ###########################
 
-                        data = get_svd_data(data_type, block)
+                        data = get_image_features(data_type, block)
 
                         ##################
                         # Data mode part #
@@ -197,54 +195,36 @@ def generate_data_svd(data_type, color, mode):
 
 def main():
 
-    # default value of p_step
-    p_step = 10
-    p_color = 0
+    parser = argparse.ArgumentParser(description="Compute feature on images dataset")
 
-    if len(sys.argv) <= 1:
-        print('Run with default parameters...')
-        print('python generate_all_data.py --metric all --color 0')
-        print('python generate_all_data.py --metric lab --color 0')
-        print('python generate_all_data.py --metric lab --color 1 --step 10')
-        sys.exit(2)
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hm:s:c", ["help=", "metric=", "step=", "color="])
-    except getopt.GetoptError:
-        # print help information and exit:
-        print('python generate_all_data.py --metric all --color 1 --step 10')
-        sys.exit(2)
-    for o, a in opts:
-        if o == "-h":
-            print('python generate_all_data.py --metric all --color 1 --step 10')
-            sys.exit()
-        elif o in ("-s", "--step"):
-            p_step = int(a)
-        elif o in ("-c", "--color"):
-            p_color = int(a)
-        elif o in ("-m", "--metric"):
-            p_metric = a
+    parser.add_argument('--feature', type=str, help='Feature choice (`all` if all features wished)')
+    parser.add_argument('--color', type=int, help='Specify if image use color or not', default=0)
+    parser.add_argument('--step', type=int, help='Step of image indices to keep', default=10)
+    args = parser.parse_args()
 
-            if p_metric != 'all' and p_metric not in metric_choices:
-                assert False, "Invalid metric choice"
-        else:
-            assert False, "unhandled option"
+    param_feature = args.feature
+    param_color   = args.color
+    param_step    = args.step
 
+    if param_feature != 'all' and param_feature not in feature_choices:
+        raise ValueError("Invalid feature choice ", feature_choices)
+        
     global picture_step
-    picture_step = p_step
+    picture_step = param_step
 
     if picture_step % 10 != 0:
-        assert False, "Picture step variable needs to be divided by ten"
+        raise ValueError("Picture step variable needs to be divided by ten")
 
-    # generate all or specific metric data
-    if p_metric == 'all':
-        for m in metric_choices:
-            generate_data_svd(m, p_color, 'svd')
-            generate_data_svd(m, p_color, 'svdn')
-            generate_data_svd(m, p_color, 'svdne')
+    # generate all or specific feature data
+    if param_feature == 'all':
+        for m in feature_choices:
+            generate_data_svd(m, param_color, 'svd')
+            generate_data_svd(m, param_color, 'svdn')
+            generate_data_svd(m, param_color, 'svdne')
     else:
-        generate_data_svd(p_metric, p_color, 'svd')
-        generate_data_svd(p_metric, p_color, 'svdn')
-        generate_data_svd(p_metric, p_color, 'svdne')
+        generate_data_svd(param_feature, param_color, 'svd')
+        generate_data_svd(param_feature, param_color, 'svdn')
+        generate_data_svd(param_feature, param_color, 'svdne')
 
 if __name__== "__main__":
     main()

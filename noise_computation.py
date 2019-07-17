@@ -1,13 +1,22 @@
-from ipfml.filters import noise as nf
-import sys, os, getopt
+# main imports
+import sys, os, argparse
+
+# image processing imports
 from PIL import Image
+from ipfml.filters import noise as nf
 
-from modules.utils import config as cfg
-from modules import noise
+# modules and config imports
+sys.path.insert(0, '') # trick to enable import of main folder module
 
+import custom_config as cfg
+from data_attributes import get_noise_result
+
+
+# other variables
 noise_list       = cfg.noise_labels
 generated_folder = cfg.generated_folder
 filename_ext     = cfg.filename_ext
+
 
 def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 
@@ -25,7 +34,7 @@ def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 
     if not os.path.exists(output_image_path):
 
-        noisy_image = noise.get_noise_result(p_image, p_n, _noise_choice=p_noise, _identical=p_identical, _p=p_param)
+        noisy_image = get_noise_result(p_image, p_n, _noise_choice=p_noise, _identical=p_identical, _p=p_param)
         noisy_image = Image.fromarray(noisy_image)
 
         noisy_image.save(output_image_path)
@@ -38,63 +47,43 @@ def generate_noisy_image(p_image, p_n, p_noise, p_identical, p_output, p_param):
 
 def main():
 
-    # by default..
-    p_step = 1
-    p_param = None
-    p_all = False
+    parser = argparse.ArgumentParser(description="Compute noise on specific image")
 
-    if len(sys.argv) < 1:
-        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
-        sys.exit(2)
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "h:n:i:n:i:o:a:p", ["help=", "noise=", "image=", "n=", "identical=", "output=", "step=", "all=", "p="])
-    except getopt.GetoptError:
-        # print help information and exit:
-        print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
-        sys.exit(2)
-    for o, a in opts:
-        if o == "-h":
-            print('python noise_computation.py --noise xxxx --image path/to/image.png --n 100 --identical 0 --output image_name --step 10 --all 1 --p 0.1')
-            sys.exit()
-        elif o in ("-n", "--noise"):
-            p_noise = a
+    parser.add_argument('--noise', type=str, help='Noise choice to apply', choices=cfg.noise_labels)
+    parser.add_argument('--image', type=str, help='image path')
+    parser.add_argument('--n', type=int, help='Number of images')
+    parser.add_argument('--identical', type=int, help='Use of color or grey level', default=0)
+    parser.add_argument('--output', type=int, help='Output image name', default=0)
+    parser.add_argument('--step', type=int, help='Step of image indices to keep', default=1)
+    parser.add_argument('--all', type=int, help='Use of all image until `n` or just `n`', default=1)
+    parser.add_argument('--p', type=float, help='Distribution to use for noise', default=0.1)
 
-            if not p_noise in noise_list:
-                assert False, "Unknow noise parameter %s, %s " % (p_noise, noise_list)
+    args = parser.parse_args()
 
-        elif o in ("-i", "--image"):
-            p_image_path = a
-        elif o in ("-n", "--n"):
-            p_n = int(a)
+    param_noise     = args.noise
+    param_image     = args.image
+    param_n         = args.n
+    param_identical = args.identical
+    param_output    = args.output
+    param_step      = args.step
+    param_all       = args.all
+    param_p         = args.p
 
-        elif o in ("-i", "--identical"):
-            p_identical = int(a)
-        elif o in ("-s", "--step"):
-            p_step = int(a)
-        elif o in ("-o", "--output"):
-            p_output = a
-        elif o in ("-a", "--all"):
-            p_all = int(a)
-        elif o in ("-p", "--p"):
-            p_param = float(a)
-        else:
-            assert False, "unhandled option"
+    img = Image.open(param_image)
 
-    img = Image.open(p_image_path)
+    if param_all:
 
-    if p_all:
+        split_output = param_output.split('.')
 
-        split_output = p_output.split('.')
+        for i in range(1, param_n):
 
-        for i in range(1, p_n):
+            if i % param_step == 0:
+                param_filename = split_output[0] + "_" + str(i) + "." + filename_ext
 
-            if i % p_step == 0:
-                p_filename = split_output[0] + "_" + str(i) + "." + filename_ext
-
-                generate_noisy_image(img, i, p_noise, p_identical, p_filename, p_param)
+                generate_noisy_image(img, i, param_noise, param_identical, param_filename, param_p)
 
     else:
-        generate_noisy_image(img, p_n, p_noise, p_identical, p_output, p_param)
+        generate_noisy_image(img, param_n, param_noise, param_identical, param_output, param_p)
 
 if __name__== "__main__":
     main()

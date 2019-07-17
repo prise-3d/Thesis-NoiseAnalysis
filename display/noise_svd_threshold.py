@@ -1,22 +1,27 @@
-import sys, os, getopt
+# main imports
+import sys, os, argparse
+import numpy as np
+
+# image processing imports
 from PIL import Image
-
 from ipfml import processing, utils
-
-from modules.utils import config as cfg
-from modules.utils import data_type as dt
-from modules import noise
-
 import matplotlib.pyplot as plt
+
+# modules and config imports
+sys.path.insert(0, '') # trick to enable import of main folder module
+
+import custom_config as cfg
+from data_attributes import get_image_features
+
 
 noise_list            = cfg.noise_labels
 generated_folder      = cfg.generated_folder
 filename_ext          = cfg.filename_ext
-metric_choices        = cfg.metric_choices_labels
+feature_choices       = cfg.features_choices_labels
 normalization_choices = cfg.normalization_choices
 pictures_folder       = cfg.pictures_output_folder
 
-step_picture          = 10
+steparam_picture          = 10
 
 class ThresholdData():
     """
@@ -40,65 +45,40 @@ class ThresholdData():
 
 def main():
 
-    # default values
-    p_step = 1
-    p_color = 0
-    p_norm = 0
-    p_ylim = (0, 1)
-    p_n = 1000
+    parser = argparse.ArgumentParser(description="Display threshold svd data")
 
-    if len(sys.argv) <= 1:
-        print('python noise_svd_threshold.py --prefix generated/scene --file threshold_file --metric lab --mode svdn --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
-        sys.exit(2)
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "h:p:f:m:m:i:s:c:n:y", ["help=", "prefix=", "file=", "metric=", "mode=", "interval=", "step=", "color=", "norm=", "ylim="])
-    except getopt.GetoptError:
-        # print help information and exit:
-        print('python noise_svd_threshold.py --prefix generated/scene --file threshold_file --metric lab --mode svdn --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
-        sys.exit(2)
-    for o, a in opts:
-        if o == "-h":
-            print('python noise_svd_threshold.py --prefix generated/scene --file threshold_file --metric lab --mode svdn --interval "0, 200" --step 30 --color 1 --norm 1 --ylim "0, 1"')
-            sys.exit()
-        elif o in ("-p", "--prefix"):
-            p_path = a
-        elif o in ("-f", "--file"):
-            p_data_file = a
+    parser.add_argument('--prefix', type=str, help='Generated noise folder prefix (ex: `generated/prefix/noise`)')
+    parser.add_argument('--file', type=str, help='Threshold file to use')
+    parser.add_argument('--mode', type=str, help='Kind of normalization', default=normalization_choices)
+    parser.add_argument('--feature', type=str, help='feature choice', default=feature_choices)
+    parser.add_argument('--color', type=int, help='Use of color or grey level', default=0)
+    parser.add_argument('--norm', type=int, help='Use of normalization from interval or whole data vector', default=0)
+    parser.add_argument('--interval', type=str, help='Interval data choice (ex: `0, 200`)', default="0, 200")
+    parser.add_argument('--step', type=int, help='Step of image indices to keep', default=1)
+    parser.add_argument('--ylim', type=str, help='Limite to display data (ex: `0, 1`)', default="0, 1")
 
-        elif o in ("-m", "--mode"):
-            p_mode = a
+    args = parser.parse_args()
 
-            if not p_mode in normalization_choices:
-                assert False, "Unknown normalization choice, %s" % normalization_choices
-
-        elif o in ("-m", "--metric"):
-            p_metric = a
-
-            if not p_metric in metric_choices:
-                assert False, "Unknown metric choice, %s" % metric_choices
-
-        elif o in ("-n", "--norm"):
-            p_norm = int(a)
-        elif o in ("-c", "--color"):
-            p_color = int(a)
-        elif o in ("-i", "--interval"):
-            p_interval = list(map(int, a.split(',')))
-        elif o in ("-s", "--step"):
-            p_step = int(a)
-        elif o in ("-y", "--ylim"):
-            p_ylim = list(map(float, a.split(',')))
-        else:
-            assert False, "unhandled option"
+    param_prefix   = args.prefix
+    param_file     = args.file
+    param_mode     = args.mode
+    param_feature  = args.feature
+    param_n        = args.n
+    param_color    = args.color
+    param_norm     = args.norm
+    param_interval = list(map(int, args.interval.split(',')))
+    param_step     = args.step
+    param_ylim     = list(map(float, args.ylim.split(',')))
 
 
-    p_prefix = p_path.split('/')[1].replace('_', '')
+    param_prefix = param_prefix.split('/')[1].replace('_', '')
 
-    if p_color:
-        file_path = p_path + "{}/" + p_prefix + "_{}_color_{}." + filename_ext
+    if param_color:
+        file_path = param_prefix + "{}/" + param_prefix + "_{}_color_{}." + filename_ext
     else:
-        file_path = p_path + "{}/" + p_prefix + "_{}_{}." + filename_ext
+        file_path = param_prefix + "{}/" + param_prefix + "_{}_{}." + filename_ext
 
-    begin, end = p_interval
+    begin, end = param_interval
 
     svd_data = []
     final_svd_data = []
@@ -108,7 +88,7 @@ def main():
     threshold_data = []
 
     # read data threshold file
-    with open(p_data_file, 'r') as f:
+    with open(param_file, 'r') as f:
         lines = f.readlines()
 
         for line in lines:
@@ -119,7 +99,7 @@ def main():
             threshold_data.append(threshold)
 
     # filter data if color or not
-    threshold_data = [t for t in threshold_data if t.isColor() == p_color]
+    threshold_data = [t for t in threshold_data if t.isColor() == param_color]
 
     for id, threshold in enumerate(threshold_data):
 
@@ -130,15 +110,15 @@ def main():
         threshold_found = False
 
         # get all data from images
-        for i in range(1, p_n):
+        for i in range(1, param_n):
 
-            if i % step_picture == 0:
+            if i % steparam_picture == 0:
                 image_path = file_path.format(current_noise, current_noise, str(i))
                 img = Image.open(image_path)
 
-                svd_values = dt.get_svd_data(p_metric, img)
+                svd_values = get_image_features(param_feature, img)
 
-                if p_norm:
+                if param_norm:
                     svd_values = svd_values[begin:end]
 
                 # only append data once
@@ -164,7 +144,7 @@ def main():
 
                 min_max_list[current_noise] = (current_min, current_max)
 
-            print('%.2f%%' % (((i + 1) * 100 + (id * p_n * 100)) / (p_n * len(threshold_data))))
+            print('%.2f%%' % (((i + 1) * 100 + (id * param_n * 100)) / (param_n * len(threshold_data))))
             sys.stdout.write("\033[F")
 
     for id, data in enumerate(svd_data):
@@ -174,10 +154,10 @@ def main():
         threshold = threshold_data[id]
         min_value_svd, max_value_svd = min_max_list[threshold.get_noise()]
 
-        if p_mode == 'svdn':
+        if param_mode == 'svdn':
             current_data = utils.normalize_arr(current_data)
 
-        if p_mode == 'svdne':
+        if param_mode == 'svdne':
             current_data = utils.normalize_arr_with_range(current_data, min_value_svd, max_value_svd)
 
         final_svd_data.append(current_data)
@@ -186,27 +166,27 @@ def main():
 
     plt.rcParams['figure.figsize'] = (25, 18)
 
-    plt.title(p_prefix  + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + p_metric + ' metric, step ' + str(p_step) + ' normalization ' + p_mode, fontsize=20)
+    plt.title(param_prefix  + ' noise, interval information ['+ str(begin) +', '+ str(end) +'], ' + param_feature + ' feature, step ' + str(param_step) + ' normalization ' + param_mode, fontsize=20)
     plt.ylabel('Importance of noise [1, 999]', fontsize=14)
     plt.xlabel('Vector features', fontsize=16)
 
     for id, data in enumerate(final_svd_data):
 
-        p_label = p_prefix + '_' + threshold_data[id].get_noise() + str(image_indices[id])
-        plt.plot(data, label=p_label)
+        param_label = param_prefix + '_' + threshold_data[id].get_noise() + str(image_indices[id])
+        plt.plot(data, label=param_label)
 
     plt.legend(bbox_to_anchor=(0.8, 1), loc=2, borderaxespad=0.2, fontsize=14)
 
-    if not p_norm:
+    if not param_norm:
         plt.xlim(begin, end)
 
     # adapt ylim
-    y_begin, y_end = p_ylim
+    y_begin, y_end = param_ylim
     plt.ylim(y_begin, y_end)
 
-    output_filename = p_prefix + "_threshold_1_to_" + str(p_n) + "_B" + str(begin) + "_E" + str(end) + "_" + p_metric + "_S" + str(p_step) + "_norm" + str(p_norm )+  "_" + p_mode
+    output_filename = param_prefix + "_threshold_1_to_" + str(param_n) + "_B" + str(begin) + "_E" + str(end) + "_" + param_feature + "_S" + str(param_step) + "_norm" + str(param_norm )+  "_" + param_mode
 
-    if p_color:
+    if param_color:
         output_filename = output_filename + '_color'
 
     print("Generation of output figure... %s" % output_filename)
