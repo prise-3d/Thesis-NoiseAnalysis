@@ -94,6 +94,9 @@ Display threshold information about scene for each noise perceived. It's necessa
 - threshold_data_median.csv
 
 These files contains threshold information about a noise such that each row are written like that :
-- <noise>;<threshold>;<color(0, 1)>
+- noise;threshold;color(0, 1)
 
 
+## LICENSE
+
+[The MIT license](LICENSE)

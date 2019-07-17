@@ -21,26 +21,26 @@ for file in "images"/*; do
 
                         if [ ! -f "curves_pictures/${filename_prefix}0${filename_suffix}.png" ]; then
 
-                            python noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 0 --ylim "0, 0.05" --error ${error}
+                            python display/noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 0 --ylim "0, 0.05" --error ${error}
                         else
                             echo "Already generated.."
                         fi
 
                         if [ ! -f "curves_pictures/${filename_prefix}1${filename_suffix}.png" ]; then
-                            python noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 1 --ylim "0, 0.1" --error ${error}
+                            python display/noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 1 --ylim "0, 0.1" --error ${error}
                         else
                             echo "Already generated.."
                         fi
 
 
                         if [ ! -f "curves_pictures/${filename_prefix}0${filename_suffix}_color.png" ]; then
-                            python noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 0 --color 1 --ylim "0, 0.05" --error ${error}
+                            python display/noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 0 --color 1 --ylim "0, 0.05" --error ${error}
                         else
                             echo "Already generated.."
                         fi
 
                         if [ ! -f "curves_pictures/${filename_prefix}1${filename_suffix}_color.png" ]; then
-                            python noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 1 --color 1 --ylim "0, 0.1" --error ${error}
+                            python display/noise_svd_tend_visualization.py  --prefix generated/${image}/${noise} --metric ${metric} --n 1000 --mode ${mode} --interval "30, 800" --step 30 --norm 1 --color 1 --ylim "0, 0.1" --error ${error}
 
                         else
                             echo "Already generated.."
