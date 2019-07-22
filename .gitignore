@@ -64,3 +64,5 @@ generated/*
 curves_pictures/*
 !generated/**/*.csv
 !generated/**/*.txt
+
+.vscode
